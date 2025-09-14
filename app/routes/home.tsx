@@ -1,6 +1,10 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import type { Route } from "./+types/home";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
+import { supabase } from "../../util/supabase";
+import type { Session } from "@supabase/supabase-js";
+import PlayerAvatar from "src/components/play/PlayerAvatar";
+import ProfileModal from "src/components/play/ProfileModal";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -9,16 +13,92 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
+
 export default function Home() {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          // User is not authenticated, redirect to auth
+          navigate("/auth");
+        } else {
+          setSession(session);
+        }
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+        // On error, redirect to auth page
+        navigate("/auth");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Error signing out:", error);
+      } else {
+        // Redirect to auth page after successful logout
+        navigate("/auth");
+      }
+    } catch (error) {
+      console.error("Unexpected error during logout:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-blue-950/20 relative overflow-hidden">
+        <InfiniteGridBackground />
+        <div className="relative z-10 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg px-8 py-12 flex flex-col items-center gap-4 w-[340px]"
+          style={{ boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)" }}>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <p className="text-gray-600 dark:text-gray-400">Checking authentication...</p>
+        </div>
+      </main>
+    );
+  }
+
+  // This should rarely be reached due to redirects, but keeping as fallback
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-blue-950/20 relative overflow-hidden">
       <InfiniteGridBackground />
-      <GameMenu />
+      <GameMenu onLogout={handleLogout} isLoggingOut={isLoggingOut} />
+       {/* Profile Modal */}
+      {session && <><PlayerAvatar setShowProfileModal={setShowProfileModal} />
+        <ProfileModal 
+         showProfileModal={showProfileModal} 
+         setShowProfileModal={setShowProfileModal}
+         userEmail={session.user.email}
+       /></>}
     </main>
   );
 }
 
-function GameMenu() {
+interface GameMenuProps {
+  onLogout: () => void;
+  isLoggingOut: boolean;
+}
+
+function GameMenu({ onLogout, isLoggingOut }: GameMenuProps) {
+ 
   return (
     <div className="relative z-10 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg px-8 py-12 flex flex-col items-center gap-8 w-[340px]"
       style={{ boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)" }}>
@@ -46,12 +126,21 @@ function GameMenu() {
         </a>
       </nav>
       <button
-        className="w-full mt-4 py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white text-lg font-semibold text-center transition-colors duration-200 shadow-sm hover:shadow-md"
+        className="w-full mt-4 py-3 rounded-lg bg-red-500 hover:bg-red-600 disabled:bg-red-400 disabled:cursor-not-allowed text-white text-lg font-semibold text-center transition-colors duration-200 shadow-sm hover:shadow-md"
         type="button"
-        // onClick={handleLogout} // Add your logout logic here
+        onClick={onLogout}
+        disabled={isLoggingOut}
       >
-        Log Out
+        {isLoggingOut ? (
+          <div className="flex items-center justify-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            Signing out...
+          </div>
+        ) : (
+          "Log Out"
+        )}
       </button>
+
     </div>
   );
 }
@@ -85,8 +174,10 @@ function InfiniteGridBackground() {
     function resize() {
       width = window.innerWidth;
       height = window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
+      if (canvas) {
+        canvas.width = width;
+        canvas.height = height;
+      }
     }
 
     function handleThemeChange() {
@@ -105,6 +196,7 @@ function InfiniteGridBackground() {
     mediaQuery.addEventListener('change', handleThemeChange);
 
     function draw() {
+      if (!ctx) return;
       ctx.clearRect(0, 0, width, height);
       
       // Fill canvas with blue/purple radial gradient background for depth
