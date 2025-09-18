@@ -1,94 +1,12 @@
 import { supabase } from './supabase';
 
-export interface ProfileUpdate {
-  level?: number;
-  accuracy?: number;
-  streak?: number;
-  bullseyes?: number;
-  score?: number;
-}
-
-export const updateUserProfile = async (userId: string, updates: ProfileUpdate) => {
-  try {
-    const { error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error('Error updating profile:', error);
-      return { success: false, error };
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error('Unexpected error updating profile:', error);
-    return { success: false, error };
-  }
-};
-
-export const incrementBullseyes = async (userId: string) => {
-  try {
-    const { error } = await supabase.rpc('increment_bullseyes', {
-      user_id: userId
-    });
-
-    if (error) {
-      console.error('Error incrementing bullseyes:', error);
-      return { success: false, error };
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error('Unexpected error incrementing bullseyes:', error);
-    return { success: false, error };
-  }
-};
-
-export const updateHighestStreak = async (userId: string, newStreak: number) => {
-  try {
-    const { error } = await supabase.rpc('update_highest_streak', {
-      user_id: userId,
-      new_streak: newStreak
-    });
-
-    if (error) {
-      console.error('Error updating highest streak:', error);
-      return { success: false, error };
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error('Unexpected error updating highest streak:', error);
-    return { success: false, error };
-  }
-};
-
-export const updateLevel = async (userId: string, newLevel: number) => {
-  try {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ level: newLevel })
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error('Error updating level:', error);
-      return { success: false, error };
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error('Unexpected error updating level:', error);
-    return { success: false, error };
-  }
-};
-
 export const updateGameData = async (userId: string, gameData: {
   level?: number;
   accuracy?: number;
   streak?: number;
   bullseyes?: number;
   score?: number;
+  shot_attempts?: number;
 }) => {
   try {
     console.log('Calling RPC with data:', {
@@ -98,6 +16,7 @@ export const updateGameData = async (userId: string, gameData: {
       p_streak: gameData.streak,
       p_bullseyes: gameData.bullseyes,
       p_score: gameData.score,
+      p_shot_attempts: gameData.shot_attempts,
     });
     
     const { data, error } = await supabase.rpc("update_game_data", {
@@ -107,6 +26,7 @@ export const updateGameData = async (userId: string, gameData: {
       p_streak: gameData.streak,
       p_bullseyes: gameData.bullseyes,
       p_score: gameData.score,
+      p_shot_attempts: gameData.shot_attempts,
     });
 
     if (error) {
@@ -122,6 +42,7 @@ export const updateGameData = async (userId: string, gameData: {
           streak: gameData.streak,
           bullseyes: gameData.bullseyes,
           score: gameData.score,
+          shot_attempts: gameData.shot_attempts,
         })
         .eq('user_id', userId)
         .select()

@@ -690,9 +690,10 @@ export default function GameCanvas({
           setPulseAnimation({ ...pulseAnimation });
         });
       } else {
-        // Animation complete, clear pulse
+        // Animation complete, clear pulse and consume powerup
         setPulseAnimation(null);
         setShowPulseEffect(false);
+        // Note: The powerup consumption will be handled by the parent component
       }
     }
   }, [
