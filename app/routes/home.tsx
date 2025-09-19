@@ -118,12 +118,12 @@ function GameMenu({ onLogout, isLoggingOut }: GameMenuProps) {
         >
           Settings
         </a>
-        <a
-          href="#"
+        <Link
+          to="/leaderboard"
           className="w-full py-3 rounded-lg bg-yellow-400 hover:bg-yellow-500 text-yellow-900 text-lg font-semibold text-center transition-colors duration-200 shadow-sm hover:shadow-md"
         >
           Leaderboard
-        </a>
+        </Link>
       </nav>
       <button
         className="w-full mt-4 py-3 rounded-lg bg-red-500 hover:bg-red-600 disabled:bg-red-400 disabled:cursor-not-allowed text-white text-lg font-semibold text-center transition-colors duration-200 shadow-sm hover:shadow-md"

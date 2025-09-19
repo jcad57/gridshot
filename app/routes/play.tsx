@@ -78,8 +78,8 @@ export default function Play() {
 
 
 
-  // Show loading screen while profile data is loading
-  if (profileState.isLoadingProfile) {
+  // Show loading screen while profile data is loading or profile data is not yet available
+  if (profileState.isLoadingProfile || !profileState.profileData) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-blue-950/20 flex items-center justify-center">
         <div className="text-center">
@@ -196,7 +196,7 @@ export default function Play() {
       {/* Floating game info bar */}
       <FloatingGameInfoBar
         totalScore={gameState.stats.totalScore}
-        highScoreStreak={gameState.highScoreStreak}
+        hits={gameState.hits}
         level={gameState.stats.level}
       />
 

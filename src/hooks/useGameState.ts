@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { updateGameData } from '../../util/profileUtils';
 import type { Session } from '@supabase/supabase-js';
 import { isHighScore, isBullseye } from '../utils/gameUtils';
+import type { ProfileData } from './useProfile';
 
 export interface GameStats {
   totalAttempts: number;
@@ -24,6 +25,7 @@ export interface GameState {
   resultMessage: string;
   isWaiting: boolean;
   highScoreStreak: number;
+  hits: number;
   pendingGridGrow: boolean;
   showLevelUpGlow: boolean;
 }
@@ -38,20 +40,21 @@ export interface GameActions {
   setResultMessage: (message: string) => void;
   setIsWaiting: (waiting: boolean) => void;
   setHighScoreStreak: (streak: number) => void;
+  setHits: (hits: number) => void;
   setPendingGridGrow: (pending: boolean) => void;
   setShowLevelUpGlow: (show: boolean) => void;
   levelUp: () => void;
   resetHighScoreStreak: () => void;
 }
 
-export function useGameState(session: Session | null, initialRandomCoord: { x: number; y: number }) {
-  // Game statistics tracking
+export function useGameState(session: Session | null, initialRandomCoord: { x: number; y: number }, profileData: ProfileData | null) {
+  // Game statistics tracking - initialize from profile data if available
   const [totalAttempts, setTotalAttempts] = useState<number>(0);
   const [currentStreak, setCurrentStreak] = useState<number>(0);
-  const [highestStreak, setHighestStreak] = useState<number>(0);
-  const [totalBullseyes, setTotalBullseyes] = useState<number>(0);
-  const [totalScore, setTotalScore] = useState<number>(0);
-  const [level, setLevel] = useState<number>(1);
+  const [highestStreak, setHighestStreak] = useState<number>(profileData?.streak || 0);
+  const [totalBullseyes, setTotalBullseyes] = useState<number>(profileData?.bullseyes || 0);
+  const [totalScore, setTotalScore] = useState<number>(profileData?.score || 0);
+  const [level, setLevel] = useState<number>(profileData?.level || 1);
 
   // Grid and game state
   const [maxCoord, setMaxCoord] = useState<number>(100);
@@ -64,6 +67,7 @@ export function useGameState(session: Session | null, initialRandomCoord: { x: n
   const [resultMessage, setResultMessage] = useState<string>('');
   const [isWaiting, setIsWaiting] = useState<boolean>(false);
   const [highScoreStreak, setHighScoreStreak] = useState<number>(0);
+  const [hits, setHits] = useState<number>(0);
   const [pendingGridGrow, setPendingGridGrow] = useState<boolean>(false);
   const [showLevelUpGlow, setShowLevelUpGlow] = useState<boolean>(false);
 
@@ -206,6 +210,7 @@ export function useGameState(session: Session | null, initialRandomCoord: { x: n
     setRandomCoord({ x: Math.floor(Math.random() * (maxCoord + 10)) + 1, y: Math.floor(Math.random() * (maxCoord + 10)) + 1 });
     resetRound();
     setHighScoreStreak(0);
+    setHits(0); // Reset hits counter on level up
     setPendingGridGrow(false);
     setShowLevelUpGlow(false);
   }, [maxCoord, totalScore, updateComprehensiveGameData, resetRound]);
@@ -214,6 +219,21 @@ export function useGameState(session: Session | null, initialRandomCoord: { x: n
   const resetHighScoreStreak = useCallback(() => {
     setHighScoreStreak(0);
   }, []);
+
+  // Update game state when profile data changes
+  useEffect(() => {
+    if (profileData) {
+      setHighestStreak(profileData.streak);
+      setTotalBullseyes(profileData.bullseyes);
+      setTotalScore(profileData.score);
+      setLevel(profileData.level);
+      // Calculate grid size based on level
+      const calculatedGridCells = Math.min(10 + Math.floor((profileData.level - 1) / 3), 20);
+      const calculatedMaxCoord = 100 + ((profileData.level - 1) * 10);
+      setGridCells(calculatedGridCells);
+      setMaxCoord(calculatedMaxCoord);
+    }
+  }, [profileData]);
 
   // Update total score when it reaches milestones (every 1000 points)
   useEffect(() => {
@@ -243,6 +263,7 @@ export function useGameState(session: Session | null, initialRandomCoord: { x: n
     resultMessage,
     isWaiting,
     highScoreStreak,
+    hits,
     pendingGridGrow,
     showLevelUpGlow
   };
@@ -257,6 +278,7 @@ export function useGameState(session: Session | null, initialRandomCoord: { x: n
     setResultMessage,
     setIsWaiting,
     setHighScoreStreak,
+    setHits,
     setPendingGridGrow,
     setShowLevelUpGlow,
     levelUp,

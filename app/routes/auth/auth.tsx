@@ -8,6 +8,7 @@ type AuthFormInputs = {
   email: string;
   password: string;
   confirmPassword?: string;
+  username?: string;
 };
 
 export default function Auth() {
@@ -28,6 +29,7 @@ export default function Auth() {
       email: "",
       password: "",
       confirmPassword: "",
+      username: "",
     },
   });
 
@@ -53,14 +55,41 @@ export default function Auth() {
         }
       } else {
         // Signup logic
-        const { error } = await supabase.auth.signUp({
+        const { data: authData, error } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
+
         });
-        
+
+        if (authData.user) {
+        await supabase
+          .from("profiles")
+          .update({ username: data.username })
+          .eq("user_id", authData.user.id);
+        }
+
         if (error) {
           setAuthError(error.message);
-        } else {
+        } else if (authData.user) {
+          // Create profile immediately with username
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              user_id: authData.user.id,
+              username: data.username,
+              level: 1,
+              accuracy: 0,
+              streak: 0,
+              bullseyes: 0,
+              score: 0,
+              shot_attempts: 0
+            });
+
+          if (profileError) {
+            console.error("Error creating profile:", profileError);
+            // Don't fail the signup if profile creation fails - it can be created later
+          }
+          
           setIsSuccess(true);
           setAuthError("Check your email for a confirmation link!");
         }
@@ -122,6 +151,40 @@ export default function Auth() {
             <span className="text-red-500 dark:text-red-400 text-sm font-medium">{errors.email.message}</span>
           )}
         </div>
+
+        {/* Username field - only show for signup */}
+        {!isLogin && (
+          <div className="flex flex-col gap-2">
+            <label htmlFor="username" className="font-medium text-gray-700 dark:text-gray-300">
+              Username
+            </label>
+            <input
+              id="username"
+              type="text"
+              autoComplete="username"
+              placeholder="Choose a unique username"
+              className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-base text-gray-900 dark:text-white bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 transition-colors duration-200"
+              {...register("username", {
+                required: !isLogin ? "Username is required" : false,
+                minLength: {
+                  value: 3,
+                  message: "Username must be at least 3 characters",
+                },
+                maxLength: {
+                  value: 20,
+                  message: "Username must be no more than 20 characters",
+                },
+                pattern: {
+                  value: /^[a-zA-Z0-9_-]+$/,
+                  message: "Username can only contain letters, numbers, underscores, and hyphens",
+                },
+              })}
+            />
+            {errors.username && (
+              <span className="text-red-500 dark:text-red-400 text-sm font-medium">{errors.username.message}</span>
+            )}
+          </div>
+        )}
         <div className="flex flex-col gap-2">
           <label htmlFor="password" className="font-medium text-gray-700 dark:text-gray-300">
             Password

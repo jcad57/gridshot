@@ -1,12 +1,12 @@
 interface FloatingGameInfoBarProps {
   totalScore: number;
-  highScoreStreak: number;
+  hits: number;
   level: number;
 }
 
 export default function FloatingGameInfoBar({
   totalScore,
-  highScoreStreak,
+  hits,
   level,
 }: FloatingGameInfoBarProps) {
   return (
@@ -32,12 +32,12 @@ export default function FloatingGameInfoBar({
           <span className="text-xl font-extrabold">{totalScore}</span>
         </div>
 
-        {/* Streak info */}
+        {/* Hits info */}
         <div className="flex flex-col items-center gap-2">
           <div className="flex flex-col items-center gap-1 text-orange-700 dark:text-orange-300">
-            <span className="text-xs font-semibold">Streak</span>
+            <span className="text-xs font-semibold">Hits</span>
             <span className="text-lg font-extrabold">
-              {highScoreStreak > 0 ? "🔥".repeat(Math.min(highScoreStreak, 3)) : "—"}
+              {hits > 0 ? `🎯 ${hits}` : "—"}
             </span>
           </div>
         </div>

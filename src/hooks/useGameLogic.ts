@@ -13,7 +13,7 @@ export function useGameLogic() {
   const initialRandomCoord = getRandomCoord(100);
   
   // Initialize all hooks
-  const { gameState, actions: gameActions } = useGameState(profileState.session, initialRandomCoord);
+  const { gameState, actions: gameActions } = useGameState(profileState.session, initialRandomCoord, profileState.profileData);
   const { powerupState, actions: powerupActions } = usePowerups();
   const { animationState, actions: animationActions } = useAnimations();
 
@@ -62,6 +62,9 @@ export function useGameLogic() {
 
     // Handle powerups and special effects
     if (isHighScore(score)) {
+      // Increment hits counter for scores 90+
+      gameActions.setHits(gameState.hits + 1);
+      
       // Award extra grid lines powerup
       powerupActions.setHasExtraGridPowerup(true);
       
@@ -106,6 +109,7 @@ export function useGameLogic() {
     gameState.randomCoord,
     gameState.maxCoord,
     gameState.highScoreStreak,
+    gameState.hits,
     gameState.stats.level,
     powerupState.streakFreeze,
     powerupState.showLevelJumpGlow,

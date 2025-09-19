@@ -3,6 +3,7 @@ import { supabase } from '../../../util/supabase';
 import type { Session } from '@supabase/supabase-js';
 
 interface ProfileData {
+  username?: string;
   level: number;
   accuracy: number;
   streak: number;
@@ -48,7 +49,7 @@ export default function ProfileModal({
       // Fetch profile data from Supabase
       const { data, error } = await supabase
         .from('profiles')
-        .select('level, accuracy, streak, bullseyes, score')
+        .select('username, level, accuracy, streak, bullseyes, score')
         .eq('user_id', currentSession.user.id)
         .single();
       console.log("Profile data:", data);
@@ -59,13 +60,14 @@ export default function ProfileModal({
           .from('profiles')
           .insert({
             user_id: currentSession.user.id,
+            username: currentSession.user.user_metadata?.username || undefined,
             level: 1,
             accuracy: 0,
             streak: 0,
             bullseyes: 0,
             score: 0
           })
-          .select('level, accuracy, streak, bullseyes, score')
+          .select('username, level, accuracy, streak, bullseyes, score')
           .single();
 
         if (insertError) {
@@ -120,11 +122,16 @@ export default function ProfileModal({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {userEmail ? userEmail.split('@')[0] : 'Player'}
+                {profileData?.username || (userEmail ? userEmail.split('@')[0] : 'Player')}
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {profileData ? `Level ${profileData.level}` : 'Loading...'}
               </p>
+              {profileData?.username && userEmail && (
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  {userEmail}
+                </p>
+              )}
             </div>
           </div>
 
