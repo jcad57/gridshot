@@ -49,7 +49,7 @@ export interface GameActions {
 
 export function useGameState(session: Session | null, initialRandomCoord: { x: number; y: number }, profileData: ProfileData | null) {
   // Game statistics tracking - initialize from profile data if available
-  const [totalAttempts, setTotalAttempts] = useState<number>(0);
+  const [totalAttempts, setTotalAttempts] = useState<number>(profileData?.shot_attempts || 0);
   const [currentStreak, setCurrentStreak] = useState<number>(0);
   const [highestStreak, setHighestStreak] = useState<number>(profileData?.streak || 0);
   const [totalBullseyes, setTotalBullseyes] = useState<number>(profileData?.bullseyes || 0);
@@ -132,6 +132,7 @@ export function useGameState(session: Session | null, initialRandomCoord: { x: n
       if (isBullseye(attemptScore)) {
         newTotalBullseyes = totalBullseyes + 1;
         setTotalBullseyes(newTotalBullseyes);
+        console.log('Bullseye detected! Updating from', totalBullseyes, 'to', newTotalBullseyes);
       }
       
       // Update Supabase with all stats including shot_attempts
@@ -220,20 +221,27 @@ export function useGameState(session: Session | null, initialRandomCoord: { x: n
     setHighScoreStreak(0);
   }, []);
 
-  // Update game state when profile data changes
+  // Update game state when profile data changes (only on initial load)
   useEffect(() => {
     if (profileData) {
-      setHighestStreak(profileData.streak);
-      setTotalBullseyes(profileData.bullseyes);
-      setTotalScore(profileData.score);
-      setLevel(profileData.level);
-      // Calculate grid size based on level
+      // Only update if we haven't initialized yet (totalAttempts is 0)
+      if (totalAttempts === 0) {
+        console.log('Initializing game state from profile data:', profileData);
+        setHighestStreak(profileData.streak);
+        setTotalBullseyes(profileData.bullseyes);
+        setTotalScore(profileData.score);
+        setLevel(profileData.level);
+        setTotalAttempts(profileData.shot_attempts || 0);
+      } else {
+        console.log('Profile data updated but not initializing (totalAttempts > 0):', profileData);
+      }
+      // Calculate grid size based on level (always update this)
       const calculatedGridCells = Math.min(10 + Math.floor((profileData.level - 1) / 3), 20);
       const calculatedMaxCoord = 100 + ((profileData.level - 1) * 10);
       setGridCells(calculatedGridCells);
       setMaxCoord(calculatedMaxCoord);
     }
-  }, [profileData]);
+  }, [profileData, totalAttempts]);
 
   // Update total score when it reaches milestones (every 1000 points)
   useEffect(() => {

@@ -3,6 +3,7 @@ import type { Route } from "./+types/leaderboard";
 import { useEffect, useState } from "react";
 import { supabase } from "../../util/supabase";
 import type { Session } from "@supabase/supabase-js";
+import { useTheme } from "../../src/components/ThemeProvider";
 import { Leaderboard } from "../../src/components/leaderboard";
 
 export function meta({}: Route.MetaArgs) {
@@ -12,14 +13,16 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-function InfiniteGridBackground() {
+function InfiniteGridBackground({ theme }: { theme: 'blue' | 'red' }) {
+  const gridColor = theme === 'red' ? 'rgba(242, 44, 44, 0.1)' : 'rgba(59, 130, 246, 0.1)';
+  
   return (
     <div className="absolute inset-0 overflow-hidden opacity-20">
       <div className="absolute inset-0" 
         style={{
           backgroundImage: `
-            linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px)
+            linear-gradient(${gridColor} 1px, transparent 1px),
+            linear-gradient(90deg, ${gridColor} 1px, transparent 1px)
           `,
           backgroundSize: '40px 40px',
           animation: 'float 20s ease-in-out infinite'
@@ -37,6 +40,7 @@ function InfiniteGridBackground() {
 
 export default function LeaderboardPage() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
@@ -79,11 +83,11 @@ export default function LeaderboardPage() {
   // Show loading state while checking authentication
   if (isLoading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-blue-950/20 relative overflow-hidden">
-        <InfiniteGridBackground />
+      <main className={`min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white ${theme === 'red' ? 'to-red-50/30' : 'to-blue-50/30'} dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 ${theme === 'red' ? 'dark:to-red-950/20' : 'dark:to-blue-950/20'} relative overflow-hidden`}>
+        <InfiniteGridBackground theme={theme} />
         <div className="relative z-10 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg px-8 py-12 flex flex-col items-center gap-4 w-[340px]"
           style={{ boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)" }}>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${theme === 'red' ? 'border-red-500' : 'border-blue-500'}`}></div>
           <p className="text-gray-600 dark:text-gray-400">Checking authentication...</p>
         </div>
       </main>
@@ -91,8 +95,8 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-blue-950/20 relative overflow-hidden">
-      <InfiniteGridBackground />
+    <main className={`min-h-screen bg-gradient-to-br from-slate-50 via-white ${theme === 'red' ? 'to-red-50/30' : 'to-blue-50/30'} dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 ${theme === 'red' ? 'dark:to-red-950/20' : 'dark:to-blue-950/20'} relative overflow-hidden`}>
+      <InfiniteGridBackground theme={theme} />
       
       {/* Header Navigation */}
       <div className="relative z-10">

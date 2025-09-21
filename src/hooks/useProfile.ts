@@ -23,6 +23,7 @@ export interface ProfileData {
   streak: number;
   bullseyes: number;
   score: number;
+  shot_attempts?: number;
 }
 
 export function useProfile() {
@@ -42,7 +43,7 @@ export function useProfile() {
         // Load initial stats from database
         const { data, error } = await supabase
           .from('profiles')
-          .select('username, level, accuracy, streak, bullseyes, score')
+          .select('username, level, accuracy, streak, bullseyes, score, shot_attempts')
           .eq('user_id', session.user.id)
           .single();
 
@@ -53,7 +54,8 @@ export function useProfile() {
             accuracy: data.accuracy || 0,
             streak: data.streak || 0,
             bullseyes: data.bullseyes || 0,
-            score: data.score || 0
+            score: data.score || 0,
+            shot_attempts: data.shot_attempts || 0
           };
           setProfileData(profileData);
         } else {
@@ -64,7 +66,8 @@ export function useProfile() {
             accuracy: 0,
             streak: 0,
             bullseyes: 0,
-            score: 0
+            score: 0,
+            shot_attempts: 0
           };
           
           // Try to create the profile in the database
@@ -77,9 +80,10 @@ export function useProfile() {
               accuracy: defaultProfile.accuracy,
               streak: defaultProfile.streak,
               bullseyes: defaultProfile.bullseyes,
-              score: defaultProfile.score
+              score: defaultProfile.score,
+              shot_attempts: defaultProfile.shot_attempts
             })
-            .select('username, level, accuracy, streak, bullseyes, score')
+            .select('username, level, accuracy, streak, bullseyes, score, shot_attempts')
             .single();
 
           if (insertError) {
@@ -98,7 +102,8 @@ export function useProfile() {
           accuracy: 0,
           streak: 0,
           bullseyes: 0,
-          score: 0
+          score: 0,
+          shot_attempts: 0
         });
       }
     } catch (error) {
@@ -110,7 +115,8 @@ export function useProfile() {
         accuracy: 0,
         streak: 0,
         bullseyes: 0,
-        score: 0
+        score: 0,
+        shot_attempts: 0
       });
     } finally {
       // Always set loading to false when done

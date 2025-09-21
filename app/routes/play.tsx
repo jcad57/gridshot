@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useGameLogic } from "../../src/hooks/useGameLogic";
+import { useTheme } from "../../src/components/ThemeProvider";
 import FloatingGameInfoBar from "../../src/components/play/FloatingGameInfoBar";
 import TargetDisplay from "../../src/components/play/TargetDisplay";
 import DeveloperMenu from "../../src/components/play/DeveloperMenu";
@@ -8,7 +10,6 @@ import PlayerAvatar from "../../src/components/play/PlayerAvatar";
 import ProfileModal from "../../src/components/play/ProfileModal";
 import Tooltip from "../../src/components/play/Tooltip";
 import GameCanvas from "../../src/components/play/GameCanvas";
-import { useGameLogic } from "../../src/hooks/useGameLogic";
 
 
 export default function Play() {
@@ -29,6 +30,8 @@ export default function Play() {
     handleActivatePulse,
     canvasDimensions
   } = useGameLogic();
+  
+  const { theme } = useTheme();
 
   // Local state for UI elements
   const [tooltip, setTooltip] = useState<{ show: boolean; x: number; y: number; title: string; description: string } | null>(null);
@@ -81,13 +84,13 @@ export default function Play() {
   // Show loading screen while profile data is loading or profile data is not yet available
   if (profileState.isLoadingProfile || !profileState.profileData) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-blue-950/20 flex items-center justify-center">
+      <div className={`fixed inset-0 bg-gradient-to-br from-slate-50 via-white ${theme === 'red' ? 'to-red-50/30' : 'to-blue-50/30'} dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 ${theme === 'red' ? 'dark:to-red-950/20' : 'dark:to-blue-950/20'} flex items-center justify-center`}>
         <div className="text-center">
-          <h1 className="text-6xl font-bold text-gray-900 dark:text-white mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent animate-pulse">
+          <h1 className={`text-6xl font-bold text-gray-900 dark:text-white mb-8 bg-gradient-to-r ${theme === 'red' ? 'from-red-600 to-red-700' : 'from-blue-600 to-purple-600'} bg-clip-text text-transparent animate-pulse`}>
             Gridshot
           </h1>
           <div className="flex items-center justify-center space-x-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${theme === 'red' ? 'border-red-500' : 'border-blue-500'}`}></div>
             <span className="text-lg text-gray-600 dark:text-gray-400 font-medium">Loading game...</span>
           </div>
         </div>
@@ -112,7 +115,7 @@ export default function Play() {
       </style>
       
       {/* Static gradient background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 dark:to-blue-950/20" />
+      <div className={`fixed inset-0 bg-gradient-to-br from-slate-50 via-white ${theme === 'red' ? 'to-red-50/30' : 'to-blue-50/30'} dark:bg-gradient-to-br dark:from-gray-950 dark:via-gray-900 ${theme === 'red' ? 'dark:to-red-950/20' : 'dark:to-blue-950/20'}`} />
       
       {/* Target Display */}
       <TargetDisplay randomCoord={gameState.randomCoord} />
@@ -201,7 +204,12 @@ export default function Play() {
       />
 
       {/* Player Avatar */}
-      <PlayerAvatar setShowProfileModal={profileState.setShowProfileModal} />
+      {profileState.session && (
+        <PlayerAvatar 
+          setShowProfileModal={profileState.setShowProfileModal} 
+          session={profileState.session}
+        />
+      )}
 
       {/* Powerups Container */}
       <PowerupsContainer

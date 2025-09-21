@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "../../util/supabase";
 import type { Session } from "@supabase/supabase-js";
+import { useTheme } from "../../src/components/ThemeProvider";
 
 interface ProfileData {
   username?: string;
@@ -15,6 +16,7 @@ interface ProfileData {
 
 export default function Profile() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
@@ -68,16 +70,16 @@ export default function Profile() {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white flex items-center justify-center">
+      <div className={`min-h-screen ${theme === 'red' ? 'bg-gradient-to-br from-red-950 via-gray-900 to-red-950' : 'bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950'} text-white flex items-center justify-center`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${theme === 'red' ? 'border-red-500' : 'border-blue-500'} mx-auto mb-4`}></div>
           <p className="text-lg text-gray-400 font-medium">Loading profile...</p>
         </div>
       </div>
     );
   }
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white">
+    <div className={`min-h-screen ${theme === 'red' ? 'bg-gradient-to-br from-red-950 via-gray-900 to-red-950' : 'bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950'} text-white`}>
       {/* Header */}
       <div className="bg-white/5 backdrop-blur-sm border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

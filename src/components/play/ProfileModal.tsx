@@ -1,16 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router';
 import { supabase } from '../../../util/supabase';
 import type { Session } from '@supabase/supabase-js';
-
-interface ProfileData {
-  username?: string;
-  level: number;
-  accuracy: number;
-  streak: number;
-  bullseyes: number;
-  score: number;
-  email?: string;
-}
+import { useProfileData, type ProfileData } from '../../utils/profileDataUtils';
 
 interface ProfileModalProps {
   showProfileModal: boolean;
@@ -23,67 +15,19 @@ export default function ProfileModal({
   setShowProfileModal, 
   userEmail 
 }: ProfileModalProps) {
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
+  const { profileData, isLoading: isLoadingProfile } = useProfileData(session);
 
-  // Fetch session and profile data when modal opens
+  // Fetch session when modal opens
   useEffect(() => {
     if (showProfileModal) {
-      fetchProfileData();
+      const fetchSession = async () => {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        setSession(currentSession);
+      };
+      fetchSession();
     }
   }, [showProfileModal]);
-
-  const fetchProfileData = async () => {
-    try {
-      setIsLoadingProfile(true);
-      
-      // Get current session
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      setSession(currentSession);
-      if (!currentSession?.user?.id) {
-        console.error('No user session found');
-        return;
-      }
-
-      // Fetch profile data from Supabase
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('username, level, accuracy, streak, bullseyes, score')
-        .eq('user_id', currentSession.user.id)
-        .single();
-      console.log("Profile data:", data);
-      if (error) {
-        console.error("Error fetching profile data:", error);
-        // If profile doesn't exist, create one with default values
-        const { data: newProfile, error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: currentSession.user.id,
-            username: currentSession.user.user_metadata?.username || undefined,
-            level: 1,
-            accuracy: 0,
-            streak: 0,
-            bullseyes: 0,
-            score: 0
-          })
-          .select('username, level, accuracy, streak, bullseyes, score')
-          .single();
-
-        if (insertError) {
-          console.error("Error creating profile:", insertError);
-        } else {
-          setProfileData(newProfile);
-        }
-      } else {
-        setProfileData(data);
-      }
-    } catch (error) {
-      console.error("Unexpected error fetching profile:", error);
-    } finally {
-      setIsLoadingProfile(false);
-    }
-  };
 
   if (!showProfileModal) return null;
 
@@ -96,25 +40,24 @@ export default function ProfileModal({
       />
       
       {/* Modal */}
-      <div className={`fixed top-0 right-0 h-full w-80 sm:w-96 bg-white dark:bg-gray-950 border-l border-gray-200 dark:border-gray-700 shadow-2xl z-[80] transform transition-transform duration-300 ease-out ${
+      <div className={`fixed top-0 right-0 h-full w-80 sm:w-96 bg-white dark:bg-gray-950 border-l border-gray-200 dark:border-gray-700 shadow-2xl z-[80] transform transition-transform duration-300 ease-out flex flex-col ${
         showProfileModal ? 'translate-x-0' : 'translate-x-full'
       }`}>
         
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Profile</h2>
-          <button 
-            onClick={() => setShowProfileModal(false)}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+        {/* Close Button - Floating */}
+        <button 
+          onClick={() => setShowProfileModal(false)}
+          className="absolute top-4 right-4 z-20 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-full p-2 shadow-lg hover:cursor-pointer"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
 
-        {/* Profile Content */}
-        <div className="p-6 space-y-6">
+        {/* Profile Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto p-6 pb-8 space-y-6 relative">
+          {/* Scroll fade indicator */}
+          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white dark:from-gray-950 to-transparent pointer-events-none z-10"></div>
           {/* Avatar Section */}
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
@@ -213,7 +156,11 @@ export default function ProfileModal({
             <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Settings</h4>
             
             <div className="space-y-3">
-              <button className="w-full flex items-center justify-between p-3 text-left bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <Link 
+                to="/settings" 
+                className="w-full flex items-center justify-between p-3 text-left bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                onClick={() => setShowProfileModal(false)}
+              >
                 <div className="flex items-center space-x-3">
                   <span className="text-gray-500 dark:text-gray-400">⚙️</span>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">Game Settings</span>
@@ -221,9 +168,13 @@ export default function ProfileModal({
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </button>
+              </Link>
               
-              <button className="w-full flex items-center justify-between p-3 text-left bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <Link 
+                to="/profile" 
+                className="w-full flex items-center justify-between p-3 text-left bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                onClick={() => setShowProfileModal(false)}
+              >
                 <div className="flex items-center space-x-3">
                   <span className="text-gray-500 dark:text-gray-400">📊</span>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">View Statistics</span>
@@ -231,17 +182,21 @@ export default function ProfileModal({
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </button>
+              </Link>
               
-              <button className="w-full flex items-center justify-between p-3 text-left bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <Link 
+                to="/leaderboard" 
+                className="w-full flex items-center justify-between p-3 text-left bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                onClick={() => setShowProfileModal(false)}
+              >
                 <div className="flex items-center space-x-3">
                   <span className="text-gray-500 dark:text-gray-400">🏆</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">Achievements</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">Leaderboard</span>
                 </div>
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </button>
+              </Link>
             </div>
           </div>
         </div>

@@ -1,3 +1,5 @@
+import { useTheme } from "../ThemeProvider";
+
 interface ResultPopupProps {
   showResult: boolean;
   resultMessage: string;
@@ -19,6 +21,8 @@ export default function ResultPopup({
   isWaiting,
   handleNextRound,
 }: ResultPopupProps) {
+  const { theme } = useTheme();
+  
   if (!showResult || !resultMessage) return null;
 
   return (
@@ -28,9 +32,9 @@ export default function ResultPopup({
           <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {typeof score === "number" && (
               <span className={`${
-                score === 100 ? "relative bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 bg-clip-text text-transparent animate-pulse overflow-hidden" :
+                score === 100 ? `relative ${theme === 'red' ? 'bg-gradient-to-r from-red-600 via-red-700 to-red-600' : 'bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600'} bg-clip-text text-transparent animate-pulse overflow-hidden` :
                 score >= 90 ? "text-orange-600 dark:text-orange-400" :
-                score >= 70 ? "text-blue-600 dark:text-blue-400" :
+                score >= 70 ? `${theme === 'red' ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'}` :
                 score >= 40 ? "text-yellow-600 dark:text-yellow-400" :
                 "text-red-600 dark:text-red-400"
               }`}>
@@ -62,13 +66,13 @@ export default function ResultPopup({
             </div>
           )}
           {showGridGrowMessage && (
-            <div className="text-sm text-blue-600 dark:text-blue-400 font-semibold mb-4 animate-pulse">
+            <div className={`text-sm ${theme === 'red' ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'} font-semibold mb-4 animate-pulse`}>
               🎉 Grid size increased! Now {maxCoord} x {maxCoord}
             </div>
           )}
           {isWaiting && (
             <button
-              className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors duration-200 shadow-sm"
+              className={`px-4 py-2 rounded-lg ${theme === 'red' ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'} text-white font-medium transition-colors duration-200 shadow-sm`}
               onClick={handleNextRound}
               type="button"
             >

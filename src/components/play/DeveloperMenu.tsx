@@ -1,3 +1,5 @@
+import { useTheme } from "../ThemeProvider";
+
 interface DeveloperMenuProps {
   showDevMenu: boolean;
   setShowDevMenu: (show: boolean | ((prev: boolean) => boolean)) => void;
@@ -29,6 +31,7 @@ export default function DeveloperMenu({
   setShowHomingEffect,
   maxCoord,
 }: DeveloperMenuProps) {
+  const { theme } = useTheme();
   return (
     <div className="fixed top-20 left-4 sm:top-24 flex flex-col items-start gap-2">
       <button
@@ -51,7 +54,7 @@ export default function DeveloperMenu({
             New Target
           </button>
           <button
-            className="px-2 py-1 rounded bg-blue-500 hover:bg-blue-700 text-white font-semibold text-xs transition"
+            className={`px-2 py-1 rounded ${theme === 'red' ? 'bg-red-500 hover:bg-red-700' : 'bg-blue-500 hover:bg-blue-700'} text-white font-semibold text-xs transition`}
             onClick={handleDevGridGrow}
             type="button"
           >
